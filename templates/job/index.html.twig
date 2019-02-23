@@ -1,0 +1,100 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello CollectLinkedinController!{% endblock %}
+
+{% block body %}
+
+    {% for message in app.flashes('notice') %}
+        <div class="flash-notice">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    <div class="alert alert-primary" role="alert">
+        A simple primary alert—check it out!
+    </div>
+
+    <h1>job list</h1>
+
+    <!-- searching -->
+
+    <div class="container border">
+        <div class="row text-center font-weight-bolder">
+            <div class="col-sm-4 border">
+                title
+            </div>
+            <div class="col-sm-2 border">
+                company
+            </div>
+            <div class="col-sm-2 border">
+                location
+            </div>
+            <div class="col-sm-2 border">
+                publishedAt
+            </div>
+            <div class="col-sm-2 border">
+                state
+            </div>
+            <div class="w-100"></div>
+            <div class="col border">
+                description
+            </div>
+        </div>
+        {% for job in jobs %}
+        <div class="row text-center  align-middle">
+            <div class="col-sm-4 border">
+                {{ job.title }}
+            </div>
+            <div class="col border">
+                {{ job.company }}
+            </div>
+            <div class="col border">
+                {{ job.location }}
+            </div>
+            <div class="col border">
+                {{ job.publishedAt|ago }}
+            </div>
+            <div class="col border">
+                <select class="custom-select-sm inputGroupSelect01" >
+                    <option selected>Choose...</option>
+                    <option value="1">One</option>
+                    <option value="2">Two</option>
+                    <option value="3">Three</option>
+                </select>
+            </div>
+            <div class="w-100"></div>
+            <div class="col border">
+                {{ job.description }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- table -->
+    <table class="table table-hover table-sm table-responsive-sm">
+        <thead>
+        <tr>
+            <th scope="col">title</th>
+            <th scope="col">company</th>
+            <th scope="col">location</th>
+            <th scope="col">publishedAt</th>
+        </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs %}
+            <tr>
+                <td>{{ job.title }}</td>
+                <td>{{ job.company }}</td>
+                <td>{{ job.location }}</td>
+                <td>{{ job.publishedAt|ago }}</td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    {{ job.description }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}
