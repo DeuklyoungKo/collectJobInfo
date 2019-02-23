@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\lib\ConvertDateFromAgo;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Timestampable\Traits\TimestampableEntity;
 
@@ -70,6 +72,16 @@ class Job
      * @ORM\Column(type="text", nullable=true)
      */
     private $etc;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Application", mappedBy="job")
+     */
+    private $applications;
+
+    public function __construct()
+    {
+        $this->applications = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -201,6 +213,34 @@ class Job
     public function setEtc(?string $etc): self
     {
         $this->etc = $etc;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Application[]
+     */
+    public function getApplications(): Collection
+    {
+        return $this->applications;
+    }
+
+    public function addApplication(Application $application): self
+    {
+        if (!$this->applications->contains($application)) {
+            $this->applications[] = $application;
+            $application->addJob($this);
+        }
+
+        return $this;
+    }
+
+    public function removeApplication(Application $application): self
+    {
+        if ($this->applications->contains($application)) {
+            $this->applications->removeElement($application);
+            $application->removeJob($this);
+        }
 
         return $this;
     }

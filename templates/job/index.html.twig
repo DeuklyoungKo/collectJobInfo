@@ -5,14 +5,12 @@
 {% block body %}
 
     {% for message in app.flashes('notice') %}
-        <div class="flash-notice">
+        <div class="alert alert-primary" role="alert">
             {{ message }}
         </div>
     {% endfor %}
 
-    <div class="alert alert-primary" role="alert">
-        A simple primary alert—check it out!
-    </div>
+
 
     <h1>job list</h1>
 
@@ -43,7 +41,7 @@
         {% for job in jobs %}
         <div class="row text-center  align-middle">
             <div class="col-sm-4 border">
-                {{ job.title }}
+                <a href="{{ job.link }}" target="_blank">{{ job.title }}</a>
             </div>
             <div class="col border">
                 {{ job.company }}
@@ -63,38 +61,12 @@
                 </select>
             </div>
             <div class="w-100"></div>
-            <div class="col border">
+            <div class="col border text-left">
                 {{ job.description }}
             </div>
         </div>
         {% endfor %}
     </div>
 
-    <!-- table -->
-    <table class="table table-hover table-sm table-responsive-sm">
-        <thead>
-        <tr>
-            <th scope="col">title</th>
-            <th scope="col">company</th>
-            <th scope="col">location</th>
-            <th scope="col">publishedAt</th>
-        </tr>
-        </thead>
-        <tbody>
-            {% for job in jobs %}
-            <tr>
-                <td>{{ job.title }}</td>
-                <td>{{ job.company }}</td>
-                <td>{{ job.location }}</td>
-                <td>{{ job.publishedAt|ago }}</td>
-            </tr>
-            <tr>
-                <td colspan="4">
-                    {{ job.description }}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 
 {% endblock %}

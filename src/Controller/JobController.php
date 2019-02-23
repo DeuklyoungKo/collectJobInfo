@@ -4,7 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Job;
 use Goutte\Client;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class JobController extends AbstractController
@@ -27,10 +29,12 @@ class JobController extends AbstractController
     /**
     * @Route("/", name="job_list")
      */
-    public function jobList()
+    public function jobList(Request $request, PaginatorInterface $paginator)
     {
 
         $JobRepository = $this->getDoctrine()->getRepository(Job::class);
+
+        $em = $this->getDoctrine()->getManager();
 
         $jobs = $JobRepository->findAll();
         return $this->render('job/index.html.twig', [
@@ -38,6 +42,20 @@ class JobController extends AbstractController
         ]);
     }
 
+//
+//$em    = $this->get('doctrine.orm.entity_manager');
+//$dql   = "SELECT a FROM AcmeMainBundle:Article a";
+//$query = $em->createQuery($dql);
+//
+//$paginator  = $this->get('knp_paginator');
+//$pagination = $paginator->paginate(
+//$query, /* query NOT result */
+//$request->query->getInt('page', 1)/*page number*/,
+//10/*limit per page*/
+//);
+//
+//    // parameters to template
+//return $this->render('AcmeMainBundle:Article:list.html.twig', array('pagination' => $pagination));
 
 
     /**
