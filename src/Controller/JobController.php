@@ -6,7 +6,9 @@ use App\Entity\Job;
 use Goutte\Client;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class JobController extends AbstractController
@@ -32,30 +34,27 @@ class JobController extends AbstractController
     public function jobList(Request $request, PaginatorInterface $paginator)
     {
 
-        $JobRepository = $this->getDoctrine()->getRepository(Job::class);
+        $jobRepository = $this->getDoctrine()->getRepository(Job::class);
 
-        $em = $this->getDoctrine()->getManager();
+        $q = $request->query->get('q');
+        $stateFilter = $request->query->get('stateFilter');
+        $language = $request->query->get('language');
 
-        $jobs = $JobRepository->findAll();
+        $queryBuilder = $jobRepository->getWithSearchQueryBuilder($q,$language,$stateFilter);
+
+        $rowQuery =  $queryBuilder->getQuery();
+
+        $pagination = $paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page',1),
+            50
+        );
+
         return $this->render('job/index.html.twig', [
-            'jobs' => $jobs
+            'jobs' => $pagination,
         ]);
     }
 
-//
-//$em    = $this->get('doctrine.orm.entity_manager');
-//$dql   = "SELECT a FROM AcmeMainBundle:Article a";
-//$query = $em->createQuery($dql);
-//
-//$paginator  = $this->get('knp_paginator');
-//$pagination = $paginator->paginate(
-//$query, /* query NOT result */
-//$request->query->getInt('page', 1)/*page number*/,
-//10/*limit per page*/
-//);
-//
-//    // parameters to template
-//return $this->render('AcmeMainBundle:Article:list.html.twig', array('pagination' => $pagination));
 
 
     /**
@@ -157,6 +156,31 @@ class JobController extends AbstractController
 
     }
 
+
+    /**
+     * @Route("/changeApplicationState/{jobId}", name="change_application_state")
+     */
+    public function changeApplicationState(Request $request, Job $job)
+    {
+
+        $state = $request->query->get('state');
+        $stateFilter = $request->query->get('stateFilter');
+
+        $em = $this->getDoctrine()->getManager();
+        $job->setApplyState($state);
+        $em->persist($job);
+        $em->flush();
+
+/*        $this->addFlash(
+            'notice',
+            'complete Updating : '.$jobId
+        );*/
+
+        return new JsonResponse([
+            'result' => 'success',
+            'resultMent' => 'complete Updating',
+            ]);
+    }
 
 
     /**

@@ -31,11 +31,37 @@ class JobRepository extends ServiceEntityRepository
         return $qb->execute();
     }
 
-    /*
-    public function getWithSearchQueryBuilder(?string $term): QueryBuilder
+
+    public function getWithSearchQueryBuilder(?string $term, ?string $language, ?string $stateFilter): QueryBuilder
     {
         $qb = $this->createQueryBuilder('j')
-            ->andWhere()
+            ->orderBy('j.publishedAt')
+        ;
+
+        if ($stateFilter) {
+            $qb->andWhere("j.applyState = :stateFilter")
+               ->setParameter('stateFilter', $stateFilter)
+            ;
+        }
+
+        if ($term) {
+            $qb->andWhere("j.company like :term")
+                ->setParameter('term', "%".$term."%")
+            ;
+        }
+
+        if ($language || $language !== 'ALL') {
+
+            if ($language === 'English') {
+                $qb->andWhere("REGEXP(j.description, '[[:blank:]]on[[:blank:]]|[[:blank:]]and[[:blank:]]|[[:blank:]]the[[:blank:]]') = 1");
+            }
+
+            if ($language === 'German') {
+                $qb->andWhere("REGEXP(j.description, '[[:blank:]]on[[:blank:]]|[[:blank:]]and[[:blank:]]|[[:blank:]]the[[:blank:]]') = 0");
+            }
+
+        }
+
+        return $qb->orderBy('j.publishedAt','ASC');
     }
-    */
 }

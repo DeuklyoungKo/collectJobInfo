@@ -61,7 +61,7 @@ class Job
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $applyState = "no apply";
+    private $applyState = "notApply";
 
     /**
      * @ORM\Column(type="datetime", nullable=true)

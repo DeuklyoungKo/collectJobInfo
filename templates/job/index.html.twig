@@ -2,6 +2,10 @@
 
 {% block title %}Hello CollectLinkedinController!{% endblock %}
 
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}">
+{% endblock %}
+
 {% block body %}
 
     {% for message in app.flashes('notice') %}
@@ -11,9 +15,52 @@
     {% endfor %}
 
 
+    <h1>job list ({{ jobs.getTotalItemCount }})</h1>
 
-    <h1>job list</h1>
-
+    <form>
+        <div class="form-row  align-items-center">
+            <div class="col-3">
+                <label for="idFilterApplication">Filter</label>
+                <select class="js-select-filter" id="idFilterApplication" name="stateFilter" data-prevalue="{{ app.request.query.get('stateFilter') }}">
+                    <option value="">All</option>
+                    <option>notApply</option>
+                    <option>try</option>
+                    <option>depending</option>
+                    <option>failed</option>
+                    <option>interviewCall</option>
+                    <option>secondInterview</option>
+                    <option>skillInterview</option>
+                </select>
+                |
+            </div>
+        </div>
+        <div class="form-row mb-3">
+            <div class="col-7">
+                <input type="text"
+                       name="q"
+                       class="form-control"
+                       placeholder="Search..."
+                       value="{{ app.request.query.get('q') }}"
+                >
+            </div>
+            <div class="col">
+                <select class="form-control js-select-language" name="language" data-prevalue="{{ app.request.query.get('language') }}">
+                    <option value="">select language</option>
+                    <option>All</option>
+                    <option>English</option>
+                    <option>German</option>
+                </select>
+            </div>
+            <div class="col">
+                <div class="input-group-append">
+                    <button type="submit"
+                            class="btn btn-outline-secondary ">
+                        <span class="fa fa-search"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
     <!-- searching -->
 
     <div class="container border">
@@ -39,7 +86,7 @@
             </div>
         </div>
         {% for job in jobs %}
-        <div class="row text-center  align-middle">
+        <div class="row text-center  align-middle mt-1 bg-light">
             <div class="col-sm-4 border">
                 <a href="{{ job.link }}" target="_blank">{{ job.title }}</a>
             </div>
@@ -53,11 +100,17 @@
                 {{ job.publishedAt|ago }}
             </div>
             <div class="col border">
-                <select class="custom-select-sm inputGroupSelect01" >
-                    <option selected>Choose...</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
+                <select class="custom-select-sm inputGroupSelect01 js-select-state"
+                        data-url="{{ path('change_application_state',{'jobId':job.jobId})}}"
+                        data-prevalue = "{{ job.applyState }}"
+                >
+                    <option>notApply</option>
+                    <option>try</option>
+                    <option>depending</option>
+                    <option>failed</option>
+                    <option>interviewCall</option>
+                    <option>secondInterview</option>
+                    <option>skillInterview</option>
                 </select>
             </div>
             <div class="w-100"></div>
@@ -67,6 +120,51 @@
         </div>
         {% endfor %}
     </div>
+    <div class="row mt-3">
+        <div class="mx-auto ">
+            {{ knp_pagination_render(jobs) }}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    $(document).ready(function() {
+
+        $('.js-select-language').val($('.js-select-language').data("prevalue"));
+        $('.js-select-filter').val($('.js-select-filter').data("prevalue"));
 
 
+        $('.js-select-state').each(function () {
+            console.log($(this).data('prevalue'));
+            if ($(this).data('prevalue')) {
+                $(this).val($(this).data('prevalue'));
+            }
+        })
+
+        $('.js-select-state').on('change', function(e) {
+
+            var optionSelected = $(this).find("option:selected").val();
+            var ajaxUrl = $(this).data('url');
+
+            $.ajax({
+                url: ajaxUrl,
+                data: {
+                    state : optionSelected
+                },
+                success: function (data) {
+                    // var data = jQuery.parseJSON(JSON.stringify(data));
+                    // console.log(result.result);
+                    console.log(data['result']);
+                    if (data['result'] === 'success') {
+                        alert(data['resultMent'])
+                    }
+                }
+            });
+        });
+        // change application state end
+
+    });
+</script>
 {% endblock %}
