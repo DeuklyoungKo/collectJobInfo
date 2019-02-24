@@ -8,11 +8,6 @@
 
 {% block body %}
 
-    {% for message in app.flashes('notice') %}
-        <div class="alert alert-primary" role="alert">
-            {{ message }}
-        </div>
-    {% endfor %}
     <div class="fixed-top js-alert-top"></div>
 
     <!-- ajax result alert -->

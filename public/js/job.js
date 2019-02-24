@@ -66,7 +66,7 @@ $(document).ready(function() {
 
     function showAlert(title, ment, id) {
 
-        $alertHtml = "    <div class='alert alert-warning alert-dismissible fade show js-result-alert fixed-top' id='alert_"+id+"' role='alert'>\n" +
+        $alertHtml = "    <div class='alert alert-warning alert-dismissible fade show js-result-alert' id='alert_"+id+"' role='alert'>\n" +
             "            <strong class='js-title'>"+title+"</strong> <span class='js-ment'> "+ment+"</span>\n" +
             "        <button type='button' class='close' data-dismiss='alert' aria-label='Close'>\n" +
             "            <span aria-hidden='true'>&times;</span>\n" +

@@ -8,7 +8,6 @@ use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class JobController extends AbstractController
@@ -160,7 +159,7 @@ class JobController extends AbstractController
     /**
      * @Route("/changeApplicationState/{jobId}", name="change_application_state")
      */
-    public function changeApplicationState(Request $request, Job $job, string $jobId)
+    public function changeApplicationState(Request $request, Job $job)
     {
 
         $state = $request->query->get('state');
