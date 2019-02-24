@@ -13,7 +13,11 @@
             {{ message }}
         </div>
     {% endfor %}
+    <div class="fixed-top js-alert-top"></div>
 
+    <!-- ajax result alert -->
+    <div class="js-result-alert-posion"></div>
+    <!-- ajax result end -->
 
     <h1>job list ({{ jobs.getTotalItemCount }})</h1>
 
@@ -81,12 +85,15 @@
                 state
             </div>
             <div class="w-100"></div>
-            <div class="col border">
+            <div class="col-sm-6 border">
                 description
+            </div>
+            <div class="col-sm-6 border">
+                etc
             </div>
         </div>
         {% for job in jobs %}
-        <div class="row text-center  align-middle mt-1 bg-light">
+        <div class="row text-center  align-middle mt-1 bg-light js-tr-top">
             <div class="col-sm-4 border">
                 <a href="{{ job.link }}" target="_blank">{{ job.title }}</a>
             </div>
@@ -114,8 +121,15 @@
                 </select>
             </div>
             <div class="w-100"></div>
-            <div class="col border text-left">
+            <div class="col-sm-6 border text-left">
                 {{ job.description }}
+            </div>
+            <div class="col-sm-6 border text-left">
+                <textarea
+                        class="form-control js-etc-textarea"
+                        rows="3"
+                        data-url="{{ path('change_application_state',{'jobId':job.jobId})}}"
+                >{{ job.etc }}</textarea>
             </div>
         </div>
         {% endfor %}
@@ -129,42 +143,5 @@
 {% endblock %}
 
 {% block javascripts %}
-<script>
-    $(document).ready(function() {
-
-        $('.js-select-language').val($('.js-select-language').data("prevalue"));
-        $('.js-select-filter').val($('.js-select-filter').data("prevalue"));
-
-
-        $('.js-select-state').each(function () {
-            console.log($(this).data('prevalue'));
-            if ($(this).data('prevalue')) {
-                $(this).val($(this).data('prevalue'));
-            }
-        })
-
-        $('.js-select-state').on('change', function(e) {
-
-            var optionSelected = $(this).find("option:selected").val();
-            var ajaxUrl = $(this).data('url');
-
-            $.ajax({
-                url: ajaxUrl,
-                data: {
-                    state : optionSelected
-                },
-                success: function (data) {
-                    // var data = jQuery.parseJSON(JSON.stringify(data));
-                    // console.log(result.result);
-                    console.log(data['result']);
-                    if (data['result'] === 'success') {
-                        alert(data['resultMent'])
-                    }
-                }
-            });
-        });
-        // change application state end
-
-    });
-</script>
+    <script src="{{ asset('js/job.js') }}"></script>
 {% endblock %}

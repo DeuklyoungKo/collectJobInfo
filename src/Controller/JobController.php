@@ -160,25 +160,29 @@ class JobController extends AbstractController
     /**
      * @Route("/changeApplicationState/{jobId}", name="change_application_state")
      */
-    public function changeApplicationState(Request $request, Job $job)
+    public function changeApplicationState(Request $request, Job $job, string $jobId)
     {
 
         $state = $request->query->get('state');
-        $stateFilter = $request->query->get('stateFilter');
+        $etcValue = $request->query->get('etcValue');
 
         $em = $this->getDoctrine()->getManager();
-        $job->setApplyState($state);
+
+        if ($state) {
+            $job->setApplyState($state);
+        }
+
+        if ($etcValue) {
+            $job->setEtc($etcValue);
+        }
+
         $em->persist($job);
         $em->flush();
 
-/*        $this->addFlash(
-            'notice',
-            'complete Updating : '.$jobId
-        );*/
-
         return new JsonResponse([
             'result' => 'success',
-            'resultMent' => 'complete Updating',
+            'resultMent' => 'complete Updating ('.$job->getCompany().')',
+            'resultId' => $job->getId()
             ]);
     }
 
