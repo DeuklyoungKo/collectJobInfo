@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello CollectLinkedinController!{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}">
+{% endblock %}
+
+{% block body %}
+
+    <div class="fixed-top js-alert-top"></div>
+
+    <form>
+        <div class="form-row mb-3">
+            <div class="col-11">
+                <textarea
+                        class="form-control js-etc-textarea"
+                        rows="3"
+                        name="jobListLink"
+                >{{ app.request.query.get('jobListLink') }}</textarea>
+            </div>
+            <div class="col">
+                <div class="input-group-append">
+                    <button type="submit"
+                            class="btn btn-outline-secondary ">
+                        <span class="fa fa-search"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="list-group mb-3">
+        <button type="button"
+                class="list-group-item list-group-item-action js-past-url"
+                data-link-url="https://www.linkedin.com/jobs/search/?f_E=2&f_GC=de.2-1&f_JT=F&f_TP=1%2C2%2C3%2C4&keywords=php&location=Germany&locationId=de%3A0"
+        >Linkedin - php, berlin, Past month
+        </button>
+        <button type="button"
+                class="list-group-item list-group-item-action js-past-url"
+                data-link-url="https://www.linkedin.com/jobs/search/?f_E=2&f_GC=de.4-1-1&f_JT=F&f_TP=1%2C2%2C3%2C4&keywords=php&location=Germany&locationId=de%3A0"
+        >Linkedin - php, Munich, Past month
+        </button>
+        <button type="button"
+                class="list-group-item list-group-item-action js-past-url"
+                data-link-url="https://www.linkedin.com/jobs/search/?f_E=2&f_GC=de.2-1&f_JT=F&keywords=php&location=Germany&locationId=de%3A0"
+        >Linkedin - php, Berlin, Full-time, Entry level
+        </button>
+        <button type="button"
+                class="list-group-item list-group-item-action js-past-url"
+                data-link-url="https://www.linkedin.com/jobs/search/?f_E=2&f_GC=de.10-2-19&f_JT=F&keywords=php&location=Germany&locationId=de%3A0"
+        >Linkedin - php, Köln, Full-time, Entry level
+        </button>
+
+    </div>
+    <!-- searching -->
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function() {
+            $('.js-past-url').on('click',function () {
+
+                thisUrl = $(this).data('link-url');
+                console.log(thisUrl);
+
+                $('.js-etc-textarea').val(thisUrl);
+                console.log($('.js-etc-textarea').val());
+            });
+        });
+    </script>
+{% endblock %}

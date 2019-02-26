@@ -10,10 +10,6 @@
 
     <div class="fixed-top js-alert-top"></div>
 
-    <!-- ajax result alert -->
-    <div class="js-result-alert-posion"></div>
-    <!-- ajax result end -->
-
     <h1>job list ({{ jobs.getTotalItemCount }})</h1>
 
     <form>
@@ -23,14 +19,13 @@
                 <select class="js-select-filter" id="idFilterApplication" name="stateFilter" data-prevalue="{{ app.request.query.get('stateFilter') }}">
                     <option value="">All</option>
                     <option>notApply</option>
-                    <option>try</option>
-                    <option>depending</option>
+                    <option>trying</option>
+                    <option>pending</option>
                     <option>failed</option>
                     <option>interviewCall</option>
                     <option>secondInterview</option>
                     <option>skillInterview</option>
                 </select>
-                |
             </div>
         </div>
         <div class="form-row mb-3">
@@ -107,8 +102,8 @@
                         data-prevalue = "{{ job.applyState }}"
                 >
                     <option>notApply</option>
-                    <option>try</option>
-                    <option>depending</option>
+                    <option>trying</option>
+                    <option>pending</option>
                     <option>failed</option>
                     <option>interviewCall</option>
                     <option>secondInterview</option>
