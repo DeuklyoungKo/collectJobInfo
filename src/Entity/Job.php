@@ -15,6 +15,9 @@ class Job
 {
     use TimestampableEntity;
 
+    const JOB_LIST_FILTER_LOCATION = ['Berlin','Munich','Cologne','Frankfurt'];
+
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -43,7 +46,7 @@ class Job
     private $description;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
+     * @ORM\Column(type="string", length=300, nullable=true)
      */
     private $link;
 
@@ -164,6 +167,8 @@ class Job
         if (strpos($publishedAt,'ago')) {
             $convertDateFrmAgo = new ConvertDateFromAgo();
             $this->setpublishedAt($convertDateFrmAgo->convertDate($publishedAt));
+        }else if (strpos($publishedAt,'Just now') ) {
+            $this->setpublishedAt(date("Y-m-d H:i:s"));
         }else{
             $this->setpublishedAt($publishedAt);
         }

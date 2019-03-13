@@ -28,7 +28,9 @@ doctrine:
                 prefix: 'App\Entity'
                 alias: App
 
-        #setting Regexp for using it
+        #setting specific function for using it
         dql:
             string_functions:
                 regexp: DoctrineExtensions\Query\Mysql\Regexp
+            datetime_functions:
+                DATE_FORMAT: DoctrineExtensions\Query\Mysql\DateFormat

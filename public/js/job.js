@@ -1,16 +1,34 @@
 
 $(document).ready(function() {
 
+
+
     $('.js-select-language').val($('.js-select-language').data("prevalue"));
     $('.js-select-filter').val($('.js-select-filter').data("prevalue"));
+    $('.js-select-location-filter').val($('.js-select-location-filter').data("prevalue"));
+    $('.js-select-title-filter').val($('.js-select-title-filter').data("prevalue"));
 
 
     $('.js-select-state').each(function () {
-        console.log($(this).data('prevalue'));
         if ($(this).data('prevalue')) {
             $(this).val($(this).data('prevalue'));
         }
     })
+
+
+    $('.js-get-list-basic').on('click', function(){
+        getBasicData('English');
+    });
+
+
+    $('.js-get-list-basic-german').on('click', function(){
+        getBasicData('German');
+    });
+
+    $('.js-check-company').on('click', function(){
+        getBasicData('All',true);
+    });
+
 
 
     // change application state start
@@ -25,9 +43,7 @@ $(document).ready(function() {
                 state : optionSelected
             },
             success: function (data) {
-                // var data = jQuery.parseJSON(JSON.stringify(data));
-                // console.log(result.result);
-                console.log(data['result']);
+
                 showAlert(data['result'], data['resultMent'], data['resultId']);
             }
         });
@@ -56,8 +72,6 @@ $(document).ready(function() {
                 etcValue : etcValue
             },
             success: function (data) {
-                // var data = jQuery.parseJSON(JSON.stringify(data));
-                // console.log(result.result);
                 showAlert(data['result'], data['resultMent']);
             }
         });
@@ -82,5 +96,23 @@ $(document).ready(function() {
         }, 2000)
     }
 
+
+    function getBasicData(language, checkCompany) {
+
+        var companyName = $('.js-search-q').val();
+
+        $('.js-search-form').trigger("reset");
+
+        if(checkCompany){
+            $('.js-search-q').val(companyName);
+        }else{
+            $('.js-search-q').val('');
+            $('.js-select-location-filter').val('Berlin');
+            $('.js-select-filter').val('notApply');
+            $('.js-select-language').val(language);
+        }
+
+        $('.js-search-form').submit();
+    }
 
 });

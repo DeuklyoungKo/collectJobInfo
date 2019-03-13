@@ -3,45 +3,31 @@
 namespace App\Controller;
 
 use App\Entity\Job;
+use App\Repository\JobRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Goutte\Client;
 use Knp\Component\Pager\PaginatorInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 class JobController extends AbstractController
 {
-
-    /**
-     * @var Client
-     */
-    private $client;
-
     private $countCheckJobs = 0;
-
     private $countAddJobs = 0;
-
-    public function __construct(Client $client)
-    {
-        $this->client = $client;
-    }
+    private $JobRows = [];
+    private $jobIds = [];
 
     /**
     * @Route("/", name="job_list")
      */
-    public function jobList(Request $request, PaginatorInterface $paginator)
+    public function jobList(Request $request, PaginatorInterface $paginator, LoggerInterface $logger, JobRepository $repository)
     {
 
-        $jobRepository = $this->getDoctrine()->getRepository(Job::class);
-
-        $q = $request->query->get('q');
-        $stateFilter = $request->query->get('stateFilter');
-        $language = $request->query->get('language');
-
-        $queryBuilder = $jobRepository->getWithSearchQueryBuilder($q,$language,$stateFilter);
-
-        $rowQuery =  $queryBuilder->getQuery();
+        $queryBuilder = $repository->getWithSearchQueryBuilder($request);
 
         $pagination = $paginator->paginate(
             $queryBuilder,
@@ -49,8 +35,12 @@ class JobController extends AbstractController
             50
         );
 
+        $jobListFilterLocations = Job::JOB_LIST_FILTER_LOCATION;
+        $jobListFilterLocations[] = 'etc';
+
         return $this->render('job/index.html.twig', [
             'jobs' => $pagination,
+            'jobListFilterLocations' => $jobListFilterLocations,
         ]);
     }
 
@@ -59,18 +49,18 @@ class JobController extends AbstractController
     /**
      * @Route("/collect/linkedin", name="get_linkedin_job_data")
      */
-    public function getLinkedinJobData(Request $request)
+    public function getLinkedinJobData(Request $request, EntityManagerInterface $em, JobRepository $repository, Client $client, LoggerInterface $logger)
     {
 
-        $link = $request->query->get('jobListLink');
+        $linkBase = $request->query->get('jobListLink');
 
-//        $link = 'https://www.linkedin.com/jobs/search/?currentJobId=1109843956&distance=100&f_E=2&f_JT=F&f_TP=1%2C2%2C3%2C4&keywords=php&location=Berlin%2C%20Berlin%2C%20Germany&locationId=PLACES.de.2-1';
+//        $linkBase = 'https://www.linkedin.com/jobs/search/?currentJobId=1109843956&distance=100&f_E=2&f_JT=F&f_TP=1%2C2%2C3%2C4&keywords=php&location=Berlin%2C%20Berlin%2C%20Germany&locationId=PLACES.de.2-1';
 
-        if ($link) {
+        if ($linkBase) {
 
-            $hmltDatas = $this->client->request(
+            $hmltDatas = $client->request(
                 'GET',
-                $link,
+                $linkBase,
                 [],
                 [],
                 [
@@ -85,8 +75,8 @@ class JobController extends AbstractController
             );
 
 
-
             if ($hmltDatas->filter('.results-context-header__text')->count()) {
+
 
                 $getText = $hmltDatas->filter('.results-context-header__text')->text();
 //        <p class="results-context-header__text">1 - 25 of <span class="results-context-header__job-total">527 jobs</span></p>
@@ -100,9 +90,9 @@ class JobController extends AbstractController
 
                     $pageCount = $i*25;
                     // Linkedin Joblist page
-                    $link .= '&start='.$pageCount;
+                    $link = $linkBase.'&start='.$pageCount;
 
-                    $hmltDatas = $this->client->request(
+                    $hmltDatas = $client->request(
                         'GET',
                         $link,
                         [],
@@ -123,42 +113,31 @@ class JobController extends AbstractController
 
                                   $this->countCheckJobs++;
 
-                                  $em = $this->getDoctrine()->getManager();
-                                  $JobRepositoryIn = $this->getDoctrine()->getRepository(Job::class);
+                                  $this->JobRows[] = $node;
 
-                                  $jobId = $node->filter('.listed-job-posting--is-link')->attr('data-job-id');
-
-                                  $job = $JobRepositoryIn->findOneBy(['jobId' => $jobId]);
-
-                                  if ($job) {
-                                      return;
-                                  }else{
-                                      $this->countAddJobs++;
-                                  }
-
-                                  $job = new Job();
-                                  $job->setLink($node->filter('.listed-job-posting--is-link')->attr('href'));
-                                  $job->setJobId($jobId);
-                                  $job->setTitle($node->filter('.listed-job-posting__title')->text());
-                                  $job->setCompany($node->filter('.listed-job-posting__company')->text());
-                                  $job->setLocation($node->filter('.listed-job-posting__location')->text());
-                                  $job->setDescription($node->filter('.listed-job-posting__description')->text());
-                                  $job->setpublishedatAfterCheckAgo($node->filter('.posted-time-ago__text')->text());
-
-                                  $em->persist($job);
-                                  $em->flush();
                               });
-
 
                 }
 
+                foreach ($this->JobRows as $nodeRow) {
+                    $this->checkDuplicationFromNode($nodeRow, $repository, $em, $logger);
+                }
+
+
+                $logger->info('jobid', $this->jobIds);
+
+//                dd($this->jobIds);
 
                 $this->addFlash(
                     'notice',
                     'add job : '.$this->countAddJobs.' / Checked Job : '.$this->countCheckJobs
                 );
 
-                return $this->redirectToRoute('job_list');
+//                return $this->redirectToRoute('job_list');
+                return $this->render('job/gettingJob.html.twig', [
+
+                ]);
+
 
             }else{
 
@@ -190,13 +169,11 @@ class JobController extends AbstractController
     /**
      * @Route("/changeApplicationState/{jobId}", name="change_application_state")
      */
-    public function changeApplicationState(Request $request, Job $job)
+    public function changeApplicationState(Request $request, Job $job, EntityManagerInterface $em)
     {
 
         $state = $request->query->get('state');
         $etcValue = $request->query->get('etcValue');
-
-        $em = $this->getDoctrine()->getManager();
 
         if ($state) {
             $job->setApplyState($state);
@@ -225,15 +202,22 @@ class JobController extends AbstractController
     /**
      * @Route("/row", name="collect_linkedin_rowdata")
      */
-    public function collectLinkedinRowdata()
+    public function collectLinkedinRowdata(Request $request,Client $client)
     {
 
+//        $link = $request->query->get('jobListLink');
+//        $link = 'https://www.linkedin.com/jobs/search/?f_C=4975264&f_TP=1%2C2%2C3%2C4&keywords=&location=Worldwide&locationId=OTHERS.worldwide';
 
-        $link = 'https://www.linkedin.com/jobs/search/?currentJobId=1109843956&distance=100&f_E=2&f_JT=F&f_TP=1%2C2%2C3%2C4&keywords=php&location=Berlin%2C%20Berlin%2C%20Germany&locationId=PLACES.de.2-1';
+        $links = [];
 
-        $hmltDatas = $this->client->request(
+
+        $linkBase = 'https://www.linkedin.com/jobs/search/?f_E=2%2C4&f_GC=de.3-2-161&f_JT=F%2CC&f_TP=1%2C2%2C3%2C4&keywords=php&location=Germany&locationId=de%3A0';
+
+
+
+        $hmltDatas = $client->request(
             'GET',
-            $link,
+            $linkBase,
             [],
             [],
             [
@@ -247,13 +231,121 @@ class JobController extends AbstractController
             ]
         );
 
-        dd($hmltDatas);
+        $hmltDatas->filter('.results-context-header__text');
 
-        $JobRepository = $this->getDoctrine()->getRepository(Job::class);
+        $getText = $hmltDatas->filter('.results-context-header__text')->text();
+//        <p class="results-context-header__text">1 - 25 of <span class="results-context-header__job-total">527 jobs</span></p>
+
+        $pattern = "/[0-9]+/";
+        preg_match_all($pattern,$getText,$getNumber);
+        $totalPage = $getNumber[0][1];
+
+
+
+        if ($hmltDatas->filter('.results-context-header__text')->count()) {
+
+
+            $getText = $hmltDatas->filter('.results-context-header__text')->text();
+//        <p class="results-context-header__text">1 - 25 of <span class="results-context-header__job-total">527 jobs</span></p>
+
+            $pattern = "/[0-9]+/";
+            preg_match_all($pattern,$getText,$getNumber);
+            $totalPage = $getNumber[0][1];
+
+
+            for ($i = 0; $i <= $totalPage-1; $i++) {
+
+                $pageCount = $i*25;
+                // Linkedin Joblist page
+                $link = $linkBase.'&start='.$pageCount;
+
+
+                $links[] = $link;
+
+            }
+
+
+        }
+
+
+        dd($links);
+
+
 
         return $this->render('job/index.html.twig', [
             'controller_name' => 'CollectLinkedinController',
         ]);
     }
 
+    /**
+     * @Route("/statistic/applyjob", name="statistic_applyjob")
+     */
+    public function statisticApplyJob(JobRepository $repository, PaginatorInterface $paginator, Request $request)
+    {
+        $queryBuilder = $repository->getStatisticApplyJob()
+            ->getQuery()
+            ->getResult()
+            ;
+
+        $pagination = $paginator->paginate(
+            $queryBuilder,
+            $request->query->getInt('page',1),
+            50
+        );
+
+        return $this->render('job/statistic.html.twig', [
+            'jobs' => $pagination
+        ]);
+    }
+    
+
+    public function addNewJobDataFromNode(Crawler $node, EntityManagerInterface $em){
+
+        $job = new Job();
+        $job->setLink($node->filter('.listed-job-posting--is-link')->attr('href'));
+        $job->setJobId($node->filter('.listed-job-posting--is-link')->attr('data-job-id'));
+        $job->setTitle($node->filter('.listed-job-posting__title')->text());
+        $job->setCompany($node->filter('.listed-job-posting__company')->text());
+        $job->setLocation($node->filter('.listed-job-posting__location')->text());
+        $job->setDescription($node->filter('.listed-job-posting__description')->text());
+        $job->setpublishedatAfterCheckAgo($node->filter('.posted-time-ago__text')->text());
+
+        $em->persist($job);
+        $em->flush();
+
+    }
+
+    public function checkDuplicationFromNode(Crawler $node, JobRepository $JobRepository, EntityManagerInterface $em, LoggerInterface $logger)
+    {
+        $jobId = $node->filter('.listed-job-posting--is-link')->attr('data-job-id');
+        $job = $JobRepository->findOneBy(['jobId' => $jobId]);
+
+        if ($job) {
+//            $this->jobIds[] = $jobId;
+            $this->jobIds[] = $jobId . "/" . $node->filter('.listed-job-posting__location')->text(
+                ) . "/" . $node->filter('.listed-job-posting__company')->text(
+                ) . "/" . $node->filter('.listed-job-posting__title')->text();
+
+            return $this;
+
+        }else{
+            $this->addNewJobDataFromNode($node, $em);
+            $this->countAddJobs++;
+        }
+
+        return $this;
+    }
+
+    public function checkJobTitleToIncludeWord(Crawler $node, string $word): bool
+    {
+        $jobTitle = strtolower($node->filter('.listed-job-posting__title')->text());
+        if (strpos($jobTitle,$word)) {
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    
+   
 }
