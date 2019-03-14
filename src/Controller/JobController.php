@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Job;
+use App\Form\JobFormType;
+use App\lib\JobLib;
 use App\Repository\JobRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Goutte\Client;
@@ -41,6 +43,36 @@ class JobController extends AbstractController
         return $this->render('job/index.html.twig', [
             'jobs' => $pagination,
             'jobListFilterLocations' => $jobListFilterLocations,
+        ]);
+    }
+
+
+    /**
+     * @Route("/register", name="register_job")
+     */
+    public function jobRegister(Request $request, EntityManagerInterface $em)
+    {
+
+        $form = $this->createForm(JobFormType::class);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $job = $form->getData();
+
+//            $job
+
+            $em->persist($job);
+            $em->flush();
+
+            $this->addFlash('success', 'Job data Created!');
+            return $this->redirectToRoute('job_list');
+
+        }
+
+
+        return $this->render('job/register.html.twig', [
+            'articleForm' => $form->createView()
         ]);
     }
 
@@ -120,7 +152,12 @@ class JobController extends AbstractController
                 }
 
                 foreach ($this->JobRows as $nodeRow) {
-                    $this->checkDuplicationFromNode($nodeRow, $repository, $em, $logger);
+
+                    if ($this->checkDuplicationFromNode($nodeRow, $repository)) {
+                        $this->addNewJobDataFromNode($nodeRow, $em, Job::SOURCE_LINKEDIN);
+                        $this->countAddJobs++;
+                    }
+
                 }
 
 
@@ -143,7 +180,7 @@ class JobController extends AbstractController
 
                 $this->addFlash(
                     'notice',
-                    'linke ('.$link.') is invalid'
+                    'linke ('.$linkBase.') is invalid'
                 );
 
                 return $this->render('job/gettingJob.html.twig', [
@@ -200,7 +237,7 @@ class JobController extends AbstractController
 
 
     /**
-     * @Route("/row", name="collect_linkedin_rowdata")
+     * @Route("/row_linkedin", name="collect_linkedin_rowdata")
      */
     public function collectLinkedinRowdata(Request $request,Client $client)
     {
@@ -259,7 +296,6 @@ class JobController extends AbstractController
                 // Linkedin Joblist page
                 $link = $linkBase.'&start='.$pageCount;
 
-
                 $links[] = $link;
 
             }
@@ -276,6 +312,10 @@ class JobController extends AbstractController
             'controller_name' => 'CollectLinkedinController',
         ]);
     }
+
+
+
+
 
     /**
      * @Route("/statistic/applyjob", name="statistic_applyjob")
@@ -299,7 +339,7 @@ class JobController extends AbstractController
     }
     
 
-    public function addNewJobDataFromNode(Crawler $node, EntityManagerInterface $em){
+    public function addNewJobDataFromNode(Crawler $node, EntityManagerInterface $em, string $source){
 
         $job = new Job();
         $job->setLink($node->filter('.listed-job-posting--is-link')->attr('href'));
@@ -309,13 +349,15 @@ class JobController extends AbstractController
         $job->setLocation($node->filter('.listed-job-posting__location')->text());
         $job->setDescription($node->filter('.listed-job-posting__description')->text());
         $job->setpublishedatAfterCheckAgo($node->filter('.posted-time-ago__text')->text());
+        $job->setSource($source);
 
         $em->persist($job);
         $em->flush();
 
     }
 
-    public function checkDuplicationFromNode(Crawler $node, JobRepository $JobRepository, EntityManagerInterface $em, LoggerInterface $logger)
+
+    public function checkDuplicationFromNode(Crawler $node, JobRepository $JobRepository)
     {
         $jobId = $node->filter('.listed-job-posting--is-link')->attr('data-job-id');
         $job = $JobRepository->findOneBy(['jobId' => $jobId]);
@@ -326,15 +368,12 @@ class JobController extends AbstractController
                 ) . "/" . $node->filter('.listed-job-posting__company')->text(
                 ) . "/" . $node->filter('.listed-job-posting__title')->text();
 
-            return $this;
-
+            return false;
         }else{
-            $this->addNewJobDataFromNode($node, $em);
-            $this->countAddJobs++;
+            return true;
         }
-
-        return $this;
     }
+
 
     public function checkJobTitleToIncludeWord(Crawler $node, string $word): bool
     {

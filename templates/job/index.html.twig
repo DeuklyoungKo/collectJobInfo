@@ -135,13 +135,9 @@
                         data-url="{{ path('change_application_state',{'jobId':job.jobId})}}"
                         data-prevalue = "{{ job.applyState }}"
                 >
-                    <option>notApply</option>
-                    <option>trying</option>
-                    <option>pending</option>
-                    <option>failed</option>
-                    <option>interviewCall</option>
-                    <option>secondInterview</option>
-                    <option>skillInterview</option>
+                    {% for jobApplyState in constant('JOB_APPLY_STATE', job) %}
+                        <option>{{ jobApplyState }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="w-100"></div>

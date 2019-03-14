@@ -16,6 +16,14 @@ class Job
     use TimestampableEntity;
 
     const JOB_LIST_FILTER_LOCATION = ['Berlin','Munich','Cologne','Frankfurt'];
+    const JOB_APPLY_STATE = ['notApply', 'trying', 'pending', 'failed', 'interviewCall', 'secondInterview', 'skillInterview'];
+    const JOB_SOURCE_LIST = [
+        "linkedin" => "linkedin",
+        "xing" => "xing",
+        ];
+
+    const SOURCE_LINKEDIN = "linkedin";
+    const SOURCE_XING = "xing";
 
 
     /**
@@ -56,7 +64,7 @@ class Job
     private $publishedAt;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="string", length=255, nullable=true)
      *
      */
     private $jobId;
@@ -80,6 +88,11 @@ class Job
      * @ORM\ManyToMany(targetEntity="App\Entity\Application", mappedBy="job")
      */
     private $applications;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $source;
 
     public function __construct()
     {
@@ -174,12 +187,12 @@ class Job
         }
     }
 
-    public function getJobId(): ?int
+    public function getJobId(): ?string
     {
         return $this->jobId;
     }
 
-    public function setJobId(?int $jobId): self
+    public function setJobId(?string $jobId): self
     {
         $this->jobId = $jobId;
 
@@ -246,6 +259,18 @@ class Job
             $this->applications->removeElement($application);
             $application->removeJob($this);
         }
+
+        return $this;
+    }
+
+    public function getSource(): ?string
+    {
+        return $this->source;
+    }
+
+    public function setSource(string $source): self
+    {
+        $this->source = $source;
 
         return $this;
     }

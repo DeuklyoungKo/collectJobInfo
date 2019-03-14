@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello CollectLinkedinController!{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/font-awesome.css') }}">
+{% endblock %}
+
+{% block body %}
+
+    <h1>Launch a new Job!</h1>
+    {{ form_start(articleForm, {'attr': {'novalidate': 'novalidate'}}) }}
+    {{ form_widget(articleForm) }}
+    {{ form_end(articleForm) }}
+
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        $(document).ready(function() {
+            $('.js-past-url').on('click',function () {
+
+                thisUrl = $(this).data('link-url');
+                console.log(thisUrl);
+
+                $('.js-etc-textarea').val(thisUrl);
+                console.log($('.js-etc-textarea').val());
+            });
+        });
+    </script>
+{% endblock %}
