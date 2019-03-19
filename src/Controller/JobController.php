@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Job;
 use App\Form\JobFormType;
-use App\lib\JobLib;
 use App\Repository\JobRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Goutte\Client;
@@ -28,6 +27,7 @@ class JobController extends AbstractController
      */
     public function jobList(Request $request, PaginatorInterface $paginator, LoggerInterface $logger, JobRepository $repository)
     {
+
 
         $queryBuilder = $repository->getWithSearchQueryBuilder($request);
 
